@@ -5,10 +5,7 @@ import org.gradle.api.GradleException
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
-import java.io.BufferedOutputStream
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileOutputStream
+import java.io.*
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
@@ -23,15 +20,26 @@ class FileUtils {
         fun isClassFile(filePath: String) = filePath?.endsWith(".class")
         /**
          * 向文件追加内容
-         * @param file
+         * @param filePath
          *      被追加的文件
          * @param content
          *      追加的内容
          * @param newLine
          *      是否新开一行
          * */
-        fun append(file: File, content: String, newLine: Boolean) {
-
+        fun append(filePath: String, content: String, newLine: Boolean) {
+            val fileWriter = FileWriter(filePath, true)
+            val bufferedWriter = BufferedWriter(fileWriter)
+            val printWriter = PrintWriter(bufferedWriter);
+            if (newLine) {
+                printWriter.println(content)
+            } else {
+                printWriter.print(content)
+            }
+            printWriter.flush()
+            printWriter.close()
+            bufferedWriter.close()
+            fileWriter.close()
         }
 
         /**

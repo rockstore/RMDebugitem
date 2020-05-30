@@ -4,17 +4,18 @@ import com.android.build.api.transform.Format
 import com.android.build.api.transform.QualifiedContent
 import com.android.build.api.transform.Transform
 import com.android.build.api.transform.TransformInvocation
+import com.rock.kodebug.utils.FileAppendUtils
 import com.rock.kodebug.utils.FileUtils
 import java.util.jar.JarFile
 import kotlin.collections.MutableSet
 
 class KOTransform(val config: Config) : Transform() {
-
     init {
         println("start kotransform enabled:${config.enabled}, " +
                 "enabledWhenDebug:${config.enabledWhenDebug}, " +
                 "packageList:${config.packageList?.toString()}," +
                 "classesList:${config.classesList}")
+        FileAppendUtils.recordFilePath = config.recordFilePath
     }
 
     override fun getName() = "KOTrandform"
@@ -39,6 +40,7 @@ class KOTransform(val config: Config) : Transform() {
 
     override fun transform(transformInvocation: TransformInvocation?) {
         println("=========start transform==============")
+        FileAppendUtils.getInstance().openStream()
         // TODO 计划使用多线程降低 transform 的时间
         transformInvocation!!.inputs.forEach {transformInput ->
 
@@ -63,6 +65,7 @@ class KOTransform(val config: Config) : Transform() {
                 }
             }
         }
+        FileAppendUtils.getInstance().close()
     }
 
 }

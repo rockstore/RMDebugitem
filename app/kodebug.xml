@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <kodebug>
     <enabled>true</enabled>
-    <enableWhenDebug>false</enableWhenDebug>
+    <enable-when-Debug>false</enable-when-Debug>
+    <record-file-path>/Users/rock/a_workspaces/DebugItem/app/record.txt</record-file-path>
     <packages>
         <package>123</package>
         <package>456</package>

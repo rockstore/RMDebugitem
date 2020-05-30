@@ -1,5 +1,6 @@
 package com.rock.kodebug.asm
 
+import com.rock.kodebug.utils.FileAppendUtils
 import org.objectweb.asm.ClassVisitor
 
 import org.objectweb.asm.MethodVisitor
@@ -15,6 +16,8 @@ class KClassVisitor(api: Int, classVisitor: ClassVisitor?) : ClassVisitor(api, c
         interfaces: Array<out String>?
     ) {
         super.visit(version, access, name, signature, superName, interfaces)
+        // 写入类信息
+        FileAppendUtils.getInstance().append(name!!, true)
         println("visit class:${name}")
     }
     override fun visitMethod(
@@ -24,7 +27,6 @@ class KClassVisitor(api: Int, classVisitor: ClassVisitor?) : ClassVisitor(api, c
         signature: String?,
         exceptions: Array<out String>?
     ): MethodVisitor {
-        println("-------visit_method:${name}-${descriptor}")
         val superVisitor = super.visitMethod(access, name, descriptor, signature, exceptions)
         return KMethodVisitor(ASM5, superVisitor)
     }
