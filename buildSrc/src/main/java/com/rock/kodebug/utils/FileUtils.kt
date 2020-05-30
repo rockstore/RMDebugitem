@@ -5,9 +5,13 @@ import org.gradle.api.GradleException
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
+import java.io.BufferedOutputStream
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
 
 class FileUtils {
     companion object {
@@ -15,6 +19,8 @@ class FileUtils {
         fun isDir(file: File) = file!= null && file.isDirectory
 
         fun isClassFile(file: File) = file.absolutePath.endsWith(".class")
+
+        fun isClassFile(filePath: String) = filePath?.endsWith(".class")
         /**
          * 向文件追加内容
          * @param file
@@ -60,14 +66,14 @@ class FileUtils {
          * @param file      被 transform 的文件
          * @param dstDir    目的地址
          * */
-        fun transform(originDirPath: String, file: File, dstDir: String) {
+        fun transformClz(originDirPath: String, file: File, dstDir: String) {
             if (file == null || !file.exists()) {
                 return
             }
             if (file.isDirectory) {
                 // 如果传递的是 directory 则递归转换
                 file.listFiles().forEach {
-                    transform(originDirPath, it, dstDir)
+                    transformClz(originDirPath, it, dstDir)
                 }
             } else if (FileUtils.isClassFile(file)) {
                 val bytes = IoUtils.slurpBytes(file)
@@ -85,6 +91,29 @@ class FileUtils {
                 val dstFile = File(dstFileDir, fileName)
                 IoUtils.copy(ByteArrayInputStream(retBytes), FileOutputStream(dstFile), true)
             }
+        }
+
+        fun transformJar(inputJar: JarFile, outputJarPath: String) {
+            val jarOutputStream = JarOutputStream(BufferedOutputStream(FileOutputStream(File(outputJarPath))))
+            inputJar.entries().toList().forEach {jarEntry ->
+                val newJarEntry = JarEntry(jarEntry.name)
+                newJarEntry.setTime(jarEntry.time);
+                jarOutputStream.putNextEntry(newJarEntry);
+                val inputStream = inputJar.getInputStream(jarEntry)
+                val bytes = IoUtils.slurpBytes(inputStream)
+                var retBytes = bytes
+                if (!jarEntry.isDirectory && isClassFile(jarEntry.name)) {
+                    val cr = ClassReader(bytes)
+                    val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
+                    val cv = KClassVisitor(Opcodes.ASM5, cw)
+                    cr.accept(cv, ClassReader.EXPAND_FRAMES)
+                    retBytes = cw.toByteArray()
+                    val retByteArrayInputStream = ByteArrayInputStream(retBytes)
+                    IoUtils.copy(retByteArrayInputStream, jarOutputStream, false)
+
+                }
+            }
+            jarOutputStream.close()
         }
 
     }
