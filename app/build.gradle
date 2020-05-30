@@ -26,11 +26,6 @@ android {
 
 }
 
-KODebug {
-    enable false
-    koWhenDebug false
-//    whiteList toArray(["test", "test2"])
-}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])

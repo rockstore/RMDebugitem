@@ -4,12 +4,24 @@ import com.android.build.api.transform.Format
 import com.android.build.api.transform.QualifiedContent
 import com.android.build.api.transform.Transform
 import com.android.build.api.transform.TransformInvocation
+import com.android.ide.common.internal.WaitableExecutor
 import com.rock.kodebug.utils.FileUtils
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
 import kotlin.collections.MutableSet
 
 class KOTransform(val config: Config) : Transform() {
 
+    init {
+        println("start kotransform enabled:${config.enabled}, " +
+                "enabledWhenDebug:${config.enabledWhenDebug}, " +
+                "packageList:${config.packageList?.toString()}," +
+                "classesList:${config.classesList}")
+    }
+
     override fun getName() = "KOTrandform"
+
+
     val lineNumMap = HashMap<String, String>()
 
     override fun getInputTypes(): MutableSet<QualifiedContent.ContentType> {
@@ -18,7 +30,7 @@ class KOTransform(val config: Config) : Transform() {
         return set
     }
 
-    override fun isIncremental() = true
+    override fun isIncremental() = false
 
     override fun getScopes(): MutableSet<in QualifiedContent.Scope> {
         val set = HashSet<QualifiedContent.Scope>()
@@ -28,20 +40,22 @@ class KOTransform(val config: Config) : Transform() {
     }
 
     override fun transform(transformInvocation: TransformInvocation?) {
-        super.transform(transformInvocation)
         println("=========transform==============")
+        val waitableExecutor = WaitableExecutor.useGlobalSharedThreadPool()
         transformInvocation!!.inputs.forEach {transformInput ->
             transformInput.directoryInputs.forEach {directoryInput ->
                 directoryInput.let {directoryInput ->
                     directoryInput.file.let { file ->
-                        file.listFiles().let {fileArray ->
-                            fileArray.forEach {
-                                val dstDir = transformInvocation.outputProvider.getContentLocation(directoryInput.name, directoryInput.contentTypes, directoryInput.scopes, Format.DIRECTORY)
-                                println("dir_file:" + it.absolutePath + "-" + dstDir.absolutePath)
-
-                            }
-                        }
+                        val dstPath = transformInvocation.outputProvider.getContentLocation(directoryInput.name
+                        , directoryInput.contentTypes, directoryInput.scopes, Format.DIRECTORY)
+                        FileUtils.transform(file.absolutePath, file, dstPath.absolutePath)
                     }
+                }
+            }
+
+            transformInput.jarInputs.forEach { jarInput ->
+                jarInput.let { jarInput ->
+
                 }
             }
         }

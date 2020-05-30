@@ -31,6 +31,7 @@ class KDebugPlugin:Plugin<Project> {
             println("not app or library, exit")
             return
         }
+
         val app = project.extensions.getByType(AppExtension::class.java)
         app.registerTransform(KOTransform(config))
 

@@ -2,13 +2,13 @@
 <kodebug>
     <enabled>true</enabled>
     <enableWhenDebug>false</enableWhenDebug>
-    <packages name="packages">
-        <package></package>
-        <package></package>
-        <package></package>
+    <packages>
+        <package>123</package>
+        <package>456</package>
+        <package>789</package>
     </packages>
-    <classes name="classes">
-        <class></class>
-        <class></class>
+    <classes>
+        <class>er</class>
+        <class>vfdvf</class>
     </classes>
 </kodebug>
