@@ -19,8 +19,8 @@ class KDebugPlugin:Plugin<Project> {
         if (configFile == null || !configFile.exists()) {
             throw GradleException("can not locate kodebug.xml file at:${project.projectDir.absolutePath}")
         }
-        val config = Config.parse(configFilePath)
-        if (!config.enabled) {
+        Config.configFilePath = configFilePath
+        if (!Config.getInstance().enabled) {
             println("not eable KODebug plugin, exit")
             return
         }
@@ -33,7 +33,7 @@ class KDebugPlugin:Plugin<Project> {
         }
 
         val app = project.extensions.getByType(AppExtension::class.java)
-        app.registerTransform(KOTransform(config))
+        app.registerTransform(KOTransform())
 
     }
 }

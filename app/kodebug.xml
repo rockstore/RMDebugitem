@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <kodebug>
     <enabled>true</enabled>
-    <enable-when-Debug>false</enable-when-Debug>
     <record-file-path>/Users/rock/a_workspaces/DebugItem/app/record.txt</record-file-path>
-    <packages>
+    <white-list-packages>
         <package>123</package>
         <package>456</package>
         <package>789</package>
-    </packages>
-    <classes>
-        <class>er</class>
+    </white-list-packages>
+    <white-list-classes>
         <class>vfdvf</class>
-    </classes>
+    </white-list-classes>
 </kodebug>

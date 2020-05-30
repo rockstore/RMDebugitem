@@ -1,5 +1,6 @@
 package com.rock.kodebug.utils
 
+import com.rock.kodebug.Config
 import com.rock.kodebug.asm.KClassVisitor
 import org.gradle.api.GradleException
 import org.objectweb.asm.ClassReader
@@ -18,57 +19,31 @@ class FileUtils {
         fun isClassFile(file: File) = file.absolutePath.endsWith(".class")
 
         fun isClassFile(filePath: String) = filePath?.endsWith(".class")
-        /**
-         * 向文件追加内容
-         * @param filePath
-         *      被追加的文件
-         * @param content
-         *      追加的内容
-         * @param newLine
-         *      是否新开一行
-         * */
-        fun append(filePath: String, content: String, newLine: Boolean) {
-            val fileWriter = FileWriter(filePath, true)
-            val bufferedWriter = BufferedWriter(fileWriter)
-            val printWriter = PrintWriter(bufferedWriter);
-            if (newLine) {
-                printWriter.println(content)
-            } else {
-                printWriter.print(content)
-            }
-            printWriter.flush()
-            printWriter.close()
-            bufferedWriter.close()
-            fileWriter.close()
-        }
 
-        /**
-         * 向文件追加内容
-         * @param file
-         *      被追加内容的文件
-         * @param array
-         *      追加的字符串数组
-         * @param newLine
-         *      是否新开一行
-         * @param erase
-         *      是否擦出原来的内容
-         * */
-        fun append(file: File, array: Array<String>, newLine: Boolean, erase: Boolean) {
-            if(erase) {
-
+        fun acceptFile(filePath: String): Boolean {
+            // 去除 R 文件
+            if (filePath.contains("R$")
+                || filePath.endsWith("R.class")) {
+                return false
             }
-            file?.let {
-                var sb = StringBuilder()
-                array?.forEach {
-                    sb.append(it + File.separator)
+            // 在待排除的包中
+            val lastPreIndex = filePath.lastIndexOf(File.separator)
+            val prePath = filePath.subSequence(0, lastPreIndex)
+            Config.getInstance().packageList.forEach {
+                if (prePath.lastIndexOf(it) != -1) {
+                    return false
                 }
-                val tmp = sb.toString()
-                val content = tmp.subSequence(0, tmp.length - File.separator.length)
-
             }
+            // 在待排除的类中
+            val lastDotIndex = filePath.lastIndexOf(".")
+            val preFilePath = filePath.subSequence(0, lastDotIndex)
+            Config.getInstance().classesList.forEach {
+                if (preFilePath.lastIndexOf(it) != -1) {
+                    return false
+                }
+            }
+            return true
         }
-
-
         /**
          * 修改 class 文件，去掉 debug 信息
          * @param file      被 transform 的文件
@@ -83,18 +58,22 @@ class FileUtils {
                 file.listFiles().forEach {
                     transformClz(originDirPath, it, dstDir)
                 }
-            } else if (FileUtils.isClassFile(file)) {
+            } else {
                 val bytes = IoUtils.slurpBytes(file)
-                val cr = ClassReader(bytes)
-                val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
-                val cv = KClassVisitor(Opcodes.ASM5, cw)
-                cr.accept(cv, ClassReader.EXPAND_FRAMES)
-                val retBytes = cw.toByteArray()
+                var retBytes = bytes
                 val fileName = file.name
                 val srcPackage = file.absolutePath.substring(originDirPath.length, file.absolutePath.length - fileName.length - 1)
                 val dstFileDir = File(dstDir + File.separator +  srcPackage)
                 if (!dstFileDir.exists() && !dstFileDir.mkdirs()) {
                     throw GradleException("can not create dst dir")
+                }
+                // 如果是 class 文件才进行转换
+                if (isClassFile(file) && acceptFile(file.absolutePath)) {
+                    val cr = ClassReader(bytes)
+                    val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
+                    val cv = KClassVisitor(Opcodes.ASM5, cw)
+                    cr.accept(cv, ClassReader.EXPAND_FRAMES)
+                    retBytes = cw.toByteArray()
                 }
                 val dstFile = File(dstFileDir, fileName)
                 IoUtils.copy(ByteArrayInputStream(retBytes), FileOutputStream(dstFile), true)
@@ -110,12 +89,14 @@ class FileUtils {
                 val inputStream = inputJar.getInputStream(jarEntry)
                 val bytes = IoUtils.slurpBytes(inputStream)
                 var retBytes = bytes
-                if (!jarEntry.isDirectory && isClassFile(jarEntry.name)) {
-                    val cr = ClassReader(bytes)
-                    val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
-                    val cv = KClassVisitor(Opcodes.ASM5, cw)
-                    cr.accept(cv, ClassReader.EXPAND_FRAMES)
-                    retBytes = cw.toByteArray()
+                if (!jarEntry.isDirectory) {
+                    if (isClassFile(jarEntry.name) && acceptFile(jarEntry.name)) {
+                        val cr = ClassReader(bytes)
+                        val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
+                        val cv = KClassVisitor(Opcodes.ASM5, cw)
+                        cr.accept(cv, ClassReader.EXPAND_FRAMES)
+                        retBytes = cw.toByteArray()
+                    }
                     val retByteArrayInputStream = ByteArrayInputStream(retBytes)
                     IoUtils.copy(retByteArrayInputStream, jarOutputStream, false)
 

@@ -10,16 +10,27 @@ data class Config(var enabled: Boolean = true,
                   val classesList: MutableList<String> = mutableListOf<String>()
                   ) {
     companion object {
+
+        var configFilePath: String? = null
+        private var config: Config? = null
+
+        fun getInstance(): Config {
+            if (config == null) {
+                config = parse(configFilePath!!)
+            }
+            return config!!
+        }
+
         // 解析配置文件
-        fun parse(configFilePath: String): Config {
+        private fun parse(configFilePath: String): Config {
             val builderFactory = DocumentBuilderFactory.newInstance()
             val documentBuilder = builderFactory.newDocumentBuilder()
             val parseResult = documentBuilder.parse(configFilePath)
             val enabledNode = parseResult.getElementsByTagName("enabled")?.item(0)
             val enableWhenDebugNode = parseResult.getElementsByTagName("enable-when-debug")?.item(0)
             val recordFilePathNode = parseResult.getElementsByTagName("record-file-path")?.item(0)
-            val packageNodeList = parseResult.getElementsByTagName("packages")?.item(0)?.childNodes
-            val classNodeList = parseResult.getElementsByTagName("classes")?.item(0)?.childNodes
+            val packageNodeList = parseResult.getElementsByTagName("white-list-packages")?.item(0)?.childNodes
+            val classNodeList = parseResult.getElementsByTagName("white-list-classes")?.item(0)?.childNodes
             val config = Config()
             config.enabled = "true" == enabledNode?.firstChild?.nodeValue
             config.enabledWhenDebug = "true" == enableWhenDebugNode?.firstChild?.nodeValue

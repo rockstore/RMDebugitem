@@ -9,19 +9,16 @@ import com.rock.kodebug.utils.FileUtils
 import java.util.jar.JarFile
 import kotlin.collections.MutableSet
 
-class KOTransform(val config: Config) : Transform() {
+class KOTransform() : Transform() {
     init {
-        println("start kotransform enabled:${config.enabled}, " +
-                "enabledWhenDebug:${config.enabledWhenDebug}, " +
-                "packageList:${config.packageList?.toString()}," +
-                "classesList:${config.classesList}")
-        FileAppendUtils.recordFilePath = config.recordFilePath
+        println("start kotransform enabled:${Config.getInstance().enabled}, " +
+                "enabledWhenDebug:${Config.getInstance().enabledWhenDebug}, " +
+                "packageList:${Config.getInstance().packageList?.toString()}," +
+                "classesList:${Config.getInstance().classesList}")
+        FileAppendUtils.recordFilePath = Config.getInstance().recordFilePath
     }
 
     override fun getName() = "KOTrandform"
-
-
-    val lineNumMap = HashMap<String, String>()
 
     override fun getInputTypes(): MutableSet<QualifiedContent.ContentType> {
         val set = HashSet<QualifiedContent.ContentType>()
@@ -59,12 +56,12 @@ class KOTransform(val config: Config) : Transform() {
                     jarInput.file.let {file ->
                         val dstFile = transformInvocation.outputProvider.getContentLocation(jarInput.name,
                             jarInput.contentTypes, jarInput.scopes, Format.JAR)
-                        println("jar filepath:${file.absolutePath}---outpath:${dstFile.absolutePath}")
                         FileUtils.transformJar(JarFile(file), dstFile.absolutePath)
                     }
                 }
             }
         }
+        // transform 结束后 close
         FileAppendUtils.getInstance().close()
     }
 
