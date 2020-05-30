@@ -1,35 +1,38 @@
 package com.rock.kodebug
 
-import com.rock.kodebug.config.KODebug
+import com.android.build.gradle.AppExtension
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import com.android.build.gradle.AppExtension
-
-
-const val CONFIG_NAME = "KODebug"
+import java.io.File
 
 class KDebugPlugin:Plugin<Project> {
 
 
     override fun apply(project: Project) {
+
         println("=========================")
         println("========kodebug==========")
         println("=========================")
-        // 创建扩展
-        project.extensions.create(CONFIG_NAME, KODebug::class.java)
-        project.afterEvaluate {
-            val config = project.extensions.findByName(CONFIG_NAME) as KODebug
-            println("koconfig:" + config.enable + "-" + config.koWhenDebug + "-" + config.whiteList)
-            if (config == null || !config.enable) {
-                return@afterEvaluate
-            }
-            val hasPlugin = project.plugins.hasPlugin("com.android.application")
-            // 必须是 application 工程才能进行优化，否则没有 dex 产生
-            if (!hasPlugin) {
-                return@afterEvaluate
-            }
-            val appExtension: AppExtension = project.extensions.getByType(AppExtension::class.java)
-            appExtension.registerTransform(KOTransform(config.whiteList))
+        val configFilePath = project.projectDir.absolutePath + "/kodebug.xml";
+        val configFile = File(configFilePath)
+        if (configFile == null || !configFile.exists()) {
+            throw GradleException("can not locate kodebug.xml file at:${project.projectDir.absolutePath}")
         }
+        val config = Config.parse(configFilePath)
+        if (!config.enabled) {
+            println("not eable KODebug plugin, exit")
+            return
+        }
+        // 只能是 android 或者 library 工程才可以应用该插件
+        val hasAppPlugin = project.plugins.hasPlugin("com.android.application")
+        val hasLibraryPlugin = project.plugins.hasPlugin("com.android.library")
+        if (!hasAppPlugin && !hasLibraryPlugin) {
+            println("not app or library, exit")
+            return
+        }
+        val app = project.extensions.getByType(AppExtension::class.java)
+        app.registerTransform(KOTransform(config))
+
     }
 }

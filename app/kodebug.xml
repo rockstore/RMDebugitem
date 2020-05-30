@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<kodebug>
+    <enabled>true</enabled>
+    <enableWhenDebug>false</enableWhenDebug>
+    <packages name="packages">
+        <package></package>
+        <package></package>
+        <package></package>
+    </packages>
+    <classes name="classes">
+        <class></class>
+        <class></class>
+    </classes>
+</kodebug>

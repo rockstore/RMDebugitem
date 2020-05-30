@@ -42,5 +42,13 @@ class FileUtils {
 
             }
         }
+
+        /**
+         * 修改 class 文件，去掉 debug 信息
+         * */
+        fun transform(file: File, dstDir: File) {
+
+        }
+
     }
 }
