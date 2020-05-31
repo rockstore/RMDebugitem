@@ -3,11 +3,8 @@
     <enabled>true</enabled>
     <record-file-path>/Users/rock/a_workspaces/DebugItem/app/record.txt</record-file-path>
     <white-list-packages>
-        <package>123</package>
-        <package>456</package>
-        <package>789</package>
     </white-list-packages>
     <white-list-classes>
-        <class>vfdvf</class>
+        <class>com/rock/debugitem/BuildConfig</class>
     </white-list-classes>
 </kodebug>
