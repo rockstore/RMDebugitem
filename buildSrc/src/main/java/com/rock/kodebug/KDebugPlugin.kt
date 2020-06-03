@@ -11,6 +11,7 @@ class KDebugPlugin:Plugin<Project> {
 
     override fun apply(project: Project) {
 
+        val isFirstBuild = !project.buildDir.exists()
         println("=========================")
         println("========kodebug==========")
         println("=========================")
@@ -33,7 +34,7 @@ class KDebugPlugin:Plugin<Project> {
         }
 
         val app = project.extensions.getByType(AppExtension::class.java)
-        app.registerTransform(KOTransform())
+        app.registerTransform(KOTransform(isFirstBuild))
 
     }
 }

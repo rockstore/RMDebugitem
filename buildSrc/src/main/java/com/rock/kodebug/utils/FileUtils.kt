@@ -84,8 +84,8 @@ class FileUtils {
             val jarOutputStream = JarOutputStream(BufferedOutputStream(FileOutputStream(File(outputJarPath))))
             inputJar.entries().toList().forEach {jarEntry ->
                 val newJarEntry = JarEntry(jarEntry.name)
-                newJarEntry.setTime(jarEntry.time);
-                jarOutputStream.putNextEntry(newJarEntry);
+                newJarEntry.time = jarEntry.time
+                jarOutputStream.putNextEntry(newJarEntry)
                 val inputStream = inputJar.getInputStream(jarEntry)
                 val bytes = IoUtils.slurpBytes(inputStream)
                 var retBytes = bytes
@@ -104,6 +104,5 @@ class FileUtils {
             }
             jarOutputStream.close()
         }
-
     }
 }

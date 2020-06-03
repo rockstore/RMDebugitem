@@ -8,13 +8,14 @@ import java.util.concurrent.Future
 import java.util.jar.JarFile
 import kotlin.collections.MutableSet
 
-class KOTransform() : Transform() {
+class KOTransform(val isFirstBuild: Boolean) : Transform() {
     init {
         println("start kotransform enabled:${Config.getInstance().enabled}, " +
                 "enabledWhenDebug:${Config.getInstance().enabledWhenDebug}, " +
                 "packageList:${Config.getInstance().packageList?.toString()}," +
                 "classesList:${Config.getInstance().classesList}")
         FileAppendUtils.recordFilePath = Config.getInstance().recordFilePath
+        FileAppendUtils.getInstance()
     }
 
     override fun getName() = "KOTrandform"
@@ -28,7 +29,7 @@ class KOTransform() : Transform() {
     /**
      * 支持增量编译，支持增量编译的前提是已经编译过（本地存在被编译过的文件）且此函数返回 true
      * */
-    override fun isIncremental() = false
+    override fun isIncremental() = true
 
     override fun getScopes(): MutableSet<in QualifiedContent.Scope> {
         val set = HashSet<QualifiedContent.Scope>()
@@ -46,19 +47,28 @@ class KOTransform() : Transform() {
             val directoryTransformFuture = ThreadUtils.submit(Runnable {
                 transformInput.directoryInputs.forEach {directoryInput ->
                     directoryInput.let {directoryInput ->
-                        if (isIncremental) {
+                        // 输出目录
+                        val dstFile = transformInvocation.outputProvider.getContentLocation(directoryInput.name
+                            , directoryInput.contentTypes, directoryInput.scopes, Format.DIRECTORY)
+                        /**
+                         * 如果是第一次编译（包括第一次编译以及 clean 后执行第一次编译），
+                         * directoryInput.changedFiles 为空，这种场景需要进行区分
+                         */
+                        if (!isFirstBuild && isIncremental) {
                             directoryInput.changedFiles.entries.forEach {
                                 val file = it.key
                                 val status = it.value
+                                /**
+                                 * 经过测试，在文件被删除后，文件的状态会出现 Status.REMOVED, 故只处理 Status.ADDED
+                                 * 和 Status.CHANGED 两种状态的文件
+                                 */
                                 if (status == Status.ADDED || status == Status.CHANGED) {
-
+                                    FileUtils.transformClz(directoryInput.file.absolutePath, file, dstFile.absolutePath)
                                 }
                             }
                         } else {
                             // 不支持增量编译，所有文件都需要被转换
                             directoryInput.file.let { file ->
-                                val dstFile = transformInvocation.outputProvider.getContentLocation(directoryInput.name
-                                    , directoryInput.contentTypes, directoryInput.scopes, Format.DIRECTORY)
                                 FileUtils.transformClz(file.absolutePath, file, dstFile.absolutePath)
                             }
                         }

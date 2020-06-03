@@ -25,7 +25,7 @@ class KMethodVisitor(api: Int, methodVisitor: MethodVisitor?) : MethodVisitor(ap
 //         super.visitLineNumber(line, start)
         // 记录指令行和源代码之间的对应关系
         // 写入行号及偏移信息
-        println("-------method line number:${line}--${start!!.offset}")
+//        println("-------method line number:${line}--${start!!.offset}")
         FileAppendUtils.getInstance().append("${line}--${start!!.offset}", true)
     }
 }
