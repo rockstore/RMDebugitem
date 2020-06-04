@@ -35,12 +35,17 @@ class KOTransform(private val isFirstBuild: Boolean) : Transform() {
         val set = HashSet<QualifiedContent.Scope>()
         set.add(QualifiedContent.Scope.PROJECT)
         set.add(QualifiedContent.Scope.SUB_PROJECTS)
+        set.add(QualifiedContent.Scope.EXTERNAL_LIBRARIES)
         return set
     }
 
     override fun transform(transformInvocation: TransformInvocation?) {
         println("=========start transform==============")
         FileAppendUtils.getInstance().openStream()
+        if (!isIncremental) {
+            // 如果使用非增量编译，删除删除目录
+            transformInvocation!!.outputProvider.deleteAll()
+        }
         val startTime = System.currentTimeMillis()
         transformInvocation!!.inputs.forEach {transformInput ->
 
@@ -78,11 +83,25 @@ class KOTransform(private val isFirstBuild: Boolean) : Transform() {
 
             val jarTransformFuture = ThreadUtils.submit(Runnable {
                 transformInput.jarInputs.forEach { jarInput ->
-                    jarInput.let { jarInput ->
-                        jarInput.file.let {file ->
-                            val dstFile = transformInvocation.outputProvider.getContentLocation(jarInput.name,
-                                jarInput.contentTypes, jarInput.scopes, Format.JAR)
-                            FileUtils.transformJar(JarFile(file), dstFile.absolutePath)
+                    val dstFile = transformInvocation.outputProvider.getContentLocation(jarInput.name,
+                        jarInput.contentTypes, jarInput.scopes, Format.JAR)
+                    val status = jarInput.status
+                    println("----${jarInput.file.name}---jar_status:${status.name}")
+                    if (!isFirstBuild && isIncremental) {
+                        when (status) {
+                            Status.NOTCHANGED -> {}
+                            Status.CHANGED, Status.ADDED -> {
+                                FileUtils.transformJar(JarFile(jarInput.file), dstFile.absolutePath)
+                            }
+                            Status.REMOVED -> {
+                                dstFile.delete()
+                            }
+                        }
+                    } else {
+                        jarInput.let { jarInput ->
+                            jarInput.file.let {file ->
+                                FileUtils.transformJar(JarFile(file), dstFile.absolutePath)
+                            }
                         }
                     }
                 }

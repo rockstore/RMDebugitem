@@ -28,18 +28,22 @@ class FileUtils {
             }
             // 在待排除的包中
             val lastPreIndex = filePath.lastIndexOf(File.separator)
-            val prePath = filePath.subSequence(0, lastPreIndex)
-            Config.getInstance().packageList.forEach {
-                if (prePath.lastIndexOf(it) != -1) {
-                    return false
+            if (lastPreIndex > 0) {
+                val prePath = filePath.subSequence(0, lastPreIndex)
+                Config.getInstance().packageList.forEach {
+                    if (prePath.lastIndexOf(it) != -1) {
+                        return false
+                    }
                 }
             }
             // 在待排除的类中
             val lastDotIndex = filePath.lastIndexOf(".")
-            val preFilePath = filePath.subSequence(0, lastDotIndex)
-            Config.getInstance().classesList.forEach {
-                if (preFilePath.lastIndexOf(it) != -1) {
-                    return false
+            if (lastDotIndex > 0) {
+                val preFilePath = filePath.subSequence(0, lastDotIndex)
+                Config.getInstance().classesList.forEach {
+                    if (preFilePath.lastIndexOf(it) != -1) {
+                        return false
+                    }
                 }
             }
             return true
@@ -71,7 +75,7 @@ class FileUtils {
                 if (isClassFile(file) && acceptFile(file.absolutePath)) {
                     val cr = ClassReader(bytes)
                     val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
-                    val cv = KClassVisitor(Opcodes.ASM5, cw)
+                    val cv = KClassVisitor(Opcodes.ASM6, cw)
                     cr.accept(cv, ClassReader.EXPAND_FRAMES)
                     retBytes = cw.toByteArray()
                 }
@@ -93,7 +97,7 @@ class FileUtils {
                     if (isClassFile(jarEntry.name) && acceptFile(jarEntry.name)) {
                         val cr = ClassReader(bytes)
                         val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
-                        val cv = KClassVisitor(Opcodes.ASM5, cw)
+                        val cv = KClassVisitor(Opcodes.ASM6, cw)
                         cr.accept(cv, ClassReader.EXPAND_FRAMES)
                         retBytes = cw.toByteArray()
                     }
