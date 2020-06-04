@@ -8,7 +8,7 @@ import java.util.concurrent.Future
 import java.util.jar.JarFile
 import kotlin.collections.MutableSet
 
-class KOTransform(val isFirstBuild: Boolean) : Transform() {
+class KOTransform(private val isFirstBuild: Boolean) : Transform() {
     init {
         println("start kotransform enabled:${Config.getInstance().enabled}, " +
                 "enabledWhenDebug:${Config.getInstance().enabledWhenDebug}, " +
